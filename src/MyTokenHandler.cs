@@ -21,6 +21,11 @@ namespace httpclient_refresh
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
+
+            // check if token is already being fetched
+            if (taskCompletionSource != null)
+                await taskCompletionSource.Task;
+
             var httpResponse = await InternalSendAsync(request, cancellationToken);
             if (httpResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
             // you can add conditions such as excluding Paths and checking response message to avoid recursion
@@ -37,6 +42,7 @@ namespace httpclient_refresh
 
         private async Task UpdateTokenAsync(CancellationToken cancellationToken = default)
         {
+            // taskCompletionSource handles multiple requests attempting to refresh token at the same time 
             if (taskCompletionSource is null)
             {
                 try
