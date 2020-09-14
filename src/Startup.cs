@@ -18,11 +18,9 @@ namespace httpclient_refresh
         public void ConfigureServices(IServiceCollection services)
         {
 
-            services.AddHttpClient<MyClientService>((serviceProvider, httpClient) =>
+            services.AddHttpClient<MyClientService>(httpClient =>
             {
-                var store = serviceProvider.GetService<TokenStore>();
                 httpClient.BaseAddress = new Uri("Your base URL");
-
             }).AddHttpMessageHandler<MyTokenHandler>();
         }
 

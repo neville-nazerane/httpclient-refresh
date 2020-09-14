@@ -20,7 +20,7 @@ namespace httpclient_refresh
         }
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-        {
+        { 
 
             // check if token is already being fetched
             if (updateTokenTaskCompletionSource != null)
