@@ -12,7 +12,7 @@ namespace httpclient_refresh
     {
         private readonly TokenStore _tokenStore;
 
-        private TaskCompletionSource<object> taskCompletionSource;
+        private TaskCompletionSource<object> updateTokenTaskCompletionSource;
 
         public MyTokenHandler(TokenStore tokenStore)
         {
@@ -23,8 +23,8 @@ namespace httpclient_refresh
         {
 
             // check if token is already being fetched
-            if (taskCompletionSource != null)
-                await taskCompletionSource.Task;
+            if (updateTokenTaskCompletionSource != null)
+                await updateTokenTaskCompletionSource.Task;
 
             var httpResponse = await InternalSendAsync(request, cancellationToken);
             if (httpResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
@@ -43,8 +43,9 @@ namespace httpclient_refresh
         private async Task UpdateTokenAsync(CancellationToken cancellationToken = default)
         {
             // taskCompletionSource handles multiple requests attempting to refresh token at the same time 
-            if (taskCompletionSource is null)
+            if (updateTokenTaskCompletionSource is null)
             {
+                updateTokenTaskCompletionSource = new TaskCompletionSource<object>();
                 try
                 {
                     var refreshRequest = new HttpRequestMessage(HttpMethod.Post, "/token");
@@ -54,16 +55,16 @@ namespace httpclient_refresh
                 }
                 catch (Exception e)
                 {
-                    taskCompletionSource.TrySetException(e);
-                    taskCompletionSource = null;
+                    updateTokenTaskCompletionSource.TrySetException(e);
+                    updateTokenTaskCompletionSource = null;
                     throw new Exception("Failed fetching token", e);
                 }
 
-                taskCompletionSource.TrySetResult(null);
-                taskCompletionSource = null;
+                updateTokenTaskCompletionSource.TrySetResult(null);
+                updateTokenTaskCompletionSource = null;
             }
             else
-                await taskCompletionSource.Task;
+                await updateTokenTaskCompletionSource.Task;
         }
 
         private async Task<HttpResponseMessage> InternalSendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
